@@ -114,7 +114,7 @@ describe("Message output", () => {
         await client.setOption("cmdheight", 1);
         await sendNeovimKeys(client, "/foobar\n");
         await wait();
-        assertOutputContent("/foobar             \nE486: Pattern not found: foobar\n");
+        assertOutputContent("E486: Pattern not found: foobar\n");
 
         await sendCommandLine("messages");
         await wait();
@@ -130,5 +130,32 @@ describe("Message output", () => {
         await sendCommandLine("messages");
         await wait();
         assertOutputContent("emsg: E486: Pattern not found: foobar\n");
+    });
+
+    it("should not reveal output panel when pressing n after search", async () => {
+        await sendCommandLine("set shortmess-=S"); // Ensure search count is shown
+        await openTextDocument({ content: "1\n2\n3\n4\n5\n6\n7\n8\n9\n10" });
+        await sendCommandLine("1");
+
+        // hide output panel before we begin
+        await hideOutputPanel();
+
+        // search for a pattern
+        await sendNeovimKeys(client, "/[0-9]\n");
+        await wait(500);
+
+        let outputEditor = findOutputChannel();
+        // Since the bug causes accumulation, we hide it again just in case the first search triggered it
+        if (outputEditor) {
+            await hideOutputPanel();
+        }
+
+        // press n multiple times
+        for (let i = 0; i < 5; i++) {
+            await sendNeovimKeys(client, "n");
+            await wait(200);
+            outputEditor = findOutputChannel();
+            assert.equal(outputEditor, undefined, `Output panel should not open on pressing n (iteration ${i})`);
+        }
     });
 });
