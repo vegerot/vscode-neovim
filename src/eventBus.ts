@@ -99,7 +99,8 @@ type RedrawEventArgs =
                   | "undo"
                   | "verbose"
                   | "wildlist"
-                  | "wmsg",
+                  | "wmsg"
+                  | "return_prompt",
               content: MsgShowContent,
               replace_last: boolean,
               history: boolean,

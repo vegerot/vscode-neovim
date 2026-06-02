@@ -28,6 +28,7 @@ describe("Neovim external buffers", () => {
     });
 
     beforeEach(async () => {
+        await client.setOption("cmdheight", 2);
         await closeAllActiveEditors();
     });
 

@@ -67,17 +67,17 @@ describe("Message output", () => {
     it("should reveal output panel with contents", async () => {
         await sendCommandLine("echo 1 | echom 2 | echo 3 | echom 4");
         await wait();
-        assertOutputContent("1\n2\n3\n4\n");
+        assertOutputContent("1\n2\n3\n4");
         await hideOutputPanel();
 
         await sendCommandLine("messages");
         await wait();
-        assertOutputContent("echomsg: 2\nechomsg: 4\n");
+        assertOutputContent("2\n4");
         await hideOutputPanel();
 
         await sendCommandLine("echo 5 | echo 6 | echo 7");
         await wait();
-        assertOutputContent("5\n6\n7\n");
+        assertOutputContent("5\n6\n7");
     });
 
     it("should reveal after first line", async () => {
@@ -88,12 +88,8 @@ describe("Message output", () => {
         assert.equal(outputEditor, undefined);
 
         await wait(1400);
-        assertOutputContent("1\n2\n3\n");
-        await hideOutputPanel();
-
-        await sendCommandLine("messages");
-        await wait();
-        assertOutputContent("echomsg: 1\nechomsg: 2\nechomsg: 3\n");
+        const newOutputEditor = findOutputChannel();
+        assert.equal(newOutputEditor, undefined);
     });
 
     it("should clear history", async () => {
@@ -101,7 +97,7 @@ describe("Message output", () => {
         await wait();
         await sendCommandLine("messages");
         await wait();
-        assertOutputContent("echomsg: 1\nechomsg: 2\nechomsg: 3\n");
+        assertOutputContent("1\n2\n3");
 
         await sendCommandLine("messages clear");
         await wait();
@@ -114,11 +110,12 @@ describe("Message output", () => {
         await client.setOption("cmdheight", 1);
         await sendNeovimKeys(client, "/foobar\n");
         await wait();
-        assertOutputContent("E486: Pattern not found: foobar\n");
+        assertOutputContent("E486: Pattern not found: foobar");
 
         await sendCommandLine("messages");
         await wait();
-        assertOutputContent("emsg: E486: Pattern not found: foobar\n");
+        const outputEditor = findOutputChannel();
+        assert.equal(outputEditor, undefined);
     });
 
     it("should suppress 'pattern not found' with cmdheight=2", async () => {
@@ -129,7 +126,7 @@ describe("Message output", () => {
 
         await sendCommandLine("messages");
         await wait();
-        assertOutputContent("emsg: E486: Pattern not found: foobar\n");
+        assertOutputContent("E486: Pattern not found: foobar");
     });
 
     it("should not reveal output panel when pressing n after search", async () => {

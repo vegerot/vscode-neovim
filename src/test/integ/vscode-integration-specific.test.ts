@@ -34,6 +34,7 @@ describe("VSCode integration specific stuff", () => {
     });
 
     beforeEach(async () => {
+        await client.setOption("cmdheight", 2);
         await closeAllActiveEditors();
     });
 

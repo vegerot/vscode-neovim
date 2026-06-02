@@ -182,6 +182,10 @@ export class MessagesManager implements Disposable {
                 }
 
                 for (const [kind, content, replaceLast, _history, append] of args) {
+                    if (kind === "return_prompt") {
+                        this.main.client.input("<CR>");
+                        continue;
+                    }
                     if (kind === "empty") {
                         this.messages = [];
                         this.didChange = true;
@@ -202,9 +206,10 @@ export class MessagesManager implements Disposable {
                 this.messages = [];
 
                 for (const [entries] of args) {
-                    for (const [_, content] of entries) {
+                    for (const [kind, content] of entries) {
                         const text = content.map(([_, chunk]) => chunk).join("");
-                        const message = new Message("", text, false, false, true);
+                        const fullText = kind.length ? `${kind}: ${text}` : text;
+                        const message = new Message("", fullText, false, false, true);
                         this.messages.push(message);
                     }
                 }
@@ -280,14 +285,16 @@ export class MessagesManager implements Disposable {
             .map((m) => m.text)
             .join("\n");
 
+        const fullMsg = oldMsg ? `${oldMsg}\n${newMsg}` : newMsg;
+
         if (this.messageAreaVisible) {
             // User has already seen the old messages
             this.channel.replace(newMsg);
         } else {
-            this.channel.replace(oldMsg ? `${oldMsg}\n\n${newMsg}` : newMsg);
+            this.channel.replace(fullMsg);
         }
 
-        if (this.isShowingHistory || newMsg.split("\n").length > (await this.getCmdheight())) {
+        if (this.isShowingHistory || fullMsg.split("\n").length > (await this.getCmdheight())) {
             this.channel.show(true);
         }
     }

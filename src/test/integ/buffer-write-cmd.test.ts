@@ -87,6 +87,7 @@ describe("BufWriteCmd integration", () => {
     let client: NeovimClient;
     before(async () => {
         client = await attachTestNvimClient();
+        await client.setOption("cmdheight", 2);
     });
     after(async () => {
         await Promise.all(cleanupCallbacks.map((fn) => fn.call(this)));

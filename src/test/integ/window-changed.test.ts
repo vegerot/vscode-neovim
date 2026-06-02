@@ -29,6 +29,7 @@ describe("handle window changed event", () => {
 
     before(async () => {
         client = await attachTestNvimClient();
+        await client.setOption("cmdheight", 2);
 
         const doc1 = await workspace.openTextDocument({ content: "text 1" });
         textEditor1 = await window.showTextDocument(doc1, ViewColumn.Active);
