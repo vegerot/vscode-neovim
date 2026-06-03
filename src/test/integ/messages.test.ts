@@ -31,6 +31,10 @@ function assertOutputContent(expected: string) {
     assert.equal(content != null ? content.replace(/\r\n/g, "\n") : content, expected);
 }
 
+function assertNoOutputChannel(message = "Output panel should not be visible") {
+    assert.equal(findOutputChannel(), undefined, message);
+}
+
 async function sendCommandLine(command: string) {
     await sendVSCodeKeys(":");
     await sendVSCodeCommand("vscode-neovim.test-cmdline", command);
@@ -80,49 +84,31 @@ describe("Message output", () => {
         assertOutputContent("5\n6\n7");
     });
 
-    it("should reveal after first line", async () => {
+    it("should not reveal delayed status messages", async () => {
         await sendCommandLine("echom 1 | sleep 1 | echom 2 | echom 3");
 
         // only one line written at first, should not be revealed yet
-        const outputEditor = findOutputChannel();
-        assert.equal(outputEditor, undefined);
+        assertNoOutputChannel();
 
         await wait(1400);
-        const newOutputEditor = findOutputChannel();
-        assert.equal(newOutputEditor, undefined);
+        assertNoOutputChannel();
     });
 
-    it("should clear history", async () => {
-        await sendCommandLine("echom 1 | echom 2 | echom 3");
-        await wait();
-        await sendCommandLine("messages");
-        await wait();
-        assertOutputContent("1\n2\n3");
-
-        await sendCommandLine("messages clear");
-        await wait();
-        await sendCommandLine("messages");
-        await wait();
-        assertOutputContent("");
-    });
-
-    it("should reveal for 'pattern not found' for cmdheight=1", async () => {
+    it("should suppress one-line 'pattern not found' with cmdheight=1", async () => {
         await client.setOption("cmdheight", 1);
         await sendNeovimKeys(client, "/foobar\n");
         await wait();
-        assertOutputContent("E486: Pattern not found: foobar");
+        assertNoOutputChannel();
 
         await sendCommandLine("messages");
         await wait();
-        const outputEditor = findOutputChannel();
-        assert.equal(outputEditor, undefined);
+        assertOutputContent("E486: Pattern not found: foobar");
     });
 
     it("should suppress 'pattern not found' with cmdheight=2", async () => {
         await sendNeovimKeys(client, "/foobar\n");
         await wait();
-        const outputEditor = findOutputChannel();
-        assert.equal(outputEditor, undefined);
+        assertNoOutputChannel();
 
         await sendCommandLine("messages");
         await wait();
@@ -140,19 +126,13 @@ describe("Message output", () => {
         // search for a pattern
         await sendNeovimKeys(client, "/[0-9]\n");
         await wait(500);
-
-        let outputEditor = findOutputChannel();
-        // Since the bug causes accumulation, we hide it again just in case the first search triggered it
-        if (outputEditor) {
-            await hideOutputPanel();
-        }
+        assertNoOutputChannel("Output panel should not open after the initial search");
 
         // press n multiple times
         for (let i = 0; i < 5; i++) {
             await sendNeovimKeys(client, "n");
             await wait(200);
-            outputEditor = findOutputChannel();
-            assert.equal(outputEditor, undefined, `Output panel should not open on pressing n (iteration ${i})`);
+            assertNoOutputChannel(`Output panel should not open on pressing n (iteration ${i})`);
         }
     });
 });

@@ -110,6 +110,7 @@ type RedrawEventArgs =
     | IRedrawEventArg<"msg_showcmd", [content: MsgShowContent]>
     | IRedrawEventArg<"msg_showmode", [content: MsgShowContent]>
     | IRedrawEventArg<"msg_ruler", [content: MsgShowContent]>
+    | IRedrawEventArg<"msg_history_clear", []>
     | IRedrawEventArg<
           "mode_info_set",
           [

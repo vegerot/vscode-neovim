@@ -133,7 +133,7 @@ export class MessagesManager implements Disposable {
                     (editor) =>
                         editor.document.uri.scheme === "output" &&
                         editor.document.uri.path.includes(EXT_ID) &&
-                        editor.document.uri.path.includes(CHANNEL_NAME),
+                        editor.document.uri.path.endsWith("messages"),
                 );
                 if (this.messageAreaVisible !== messageAreaVisible && !messageAreaVisible) {
                     logger.trace("Message area closed, clearing messages");
@@ -152,6 +152,7 @@ export class MessagesManager implements Disposable {
             // "msg_showmode"  would cause a lot of noise in the logs
             case "msg_show":
             case "msg_history_show":
+            case "msg_history_clear":
             case "msg_clear":
             case "msg_showcmd":
                 logger.trace(`Redraw event: ${name} with args: ${inspect(args, { depth: 5 })}`);
@@ -214,6 +215,12 @@ export class MessagesManager implements Disposable {
                     }
                 }
 
+                break;
+            }
+            case "msg_history_clear": {
+                this.isShowingHistory = false;
+                this.messages = [];
+                this.channel.clear();
                 break;
             }
             case "msg_clear": {
@@ -289,14 +296,20 @@ export class MessagesManager implements Disposable {
 
         if (this.messageAreaVisible) {
             // User has already seen the old messages
-            this.channel.replace(newMsg);
+            this.replaceOutputMessages(newMsg);
         } else {
-            this.channel.replace(fullMsg);
+            this.replaceOutputMessages(fullMsg);
         }
 
         if (this.isShowingHistory || fullMsg.split("\n").length > (await this.getCmdheight())) {
             this.channel.show(true);
         }
+    }
+
+    private replaceOutputMessages(msg: string): void {
+        // OutputChannel.replace("") is a noop, but empty history should clear stale output.
+        this.channel.clear();
+        this.channel.replace(msg);
     }
 
     public async getCmdheight(): Promise<number> {
